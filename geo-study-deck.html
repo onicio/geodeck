@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geography Study Deck — Flashcards &amp; Quiz</title>
+<style>
+:root{
+  --ink:#22313f;--bg:#edf1f4;--paper:#ffffff;
+  --blue:#3b7dd8;--red:#e35d5b;--green:#2fa36b;--orange:#ef8a3c;
+  --purple:#8b64c9;--teal:#22a6a1;--yellow:#e0a90f;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+header{background:var(--blue);color:#fff;border-bottom:6px solid var(--ink);padding:34px 0 26px}
+.brand{display:flex;align-items:center;gap:16px}
+.brand .logo{width:58px;height:58px;flex:none}
+.brand .logo svg{width:100%;height:100%}
+h1{font-size:2.05rem;line-height:1.15;letter-spacing:.3px}
+.sub{margin-top:5px;font-size:1.02rem;opacity:.95}
+.chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.chip{background:#fff;color:var(--ink);border:2px solid var(--ink);border-radius:999px;padding:4px 14px;font-size:.83rem;font-weight:800}
+.tabs{background:var(--paper);border-bottom:3px solid var(--ink);position:sticky;top:0;z-index:20}
+.tabs .wrap{display:flex;gap:6px}
+.tabbtn{appearance:none;border:none;background:none;cursor:pointer;padding:15px 20px 11px;font-size:1rem;font-weight:800;color:#6a7885;border-bottom:5px solid transparent}
+.tabbtn.active{color:var(--blue);border-color:var(--blue)}
+.tabbtn:hover{color:var(--ink)}
+main{padding:26px 0 10px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:8px}
+.bar h2{font-size:1.32rem;margin-right:4px}
+.bar .note{font-size:.9rem;color:#5c6b78;flex:1;min-width:220px}
+.bar .actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{appearance:none;cursor:pointer;border:2.5px solid var(--ink);border-radius:10px;background:var(--yellow);color:var(--ink);font-weight:800;font-size:.92rem;padding:9px 16px}
+.btn.blue{background:var(--blue);color:#fff}
+.btn.plain{background:#fff}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+/* ---------- flashcards ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(222px,1fr));gap:16px;margin:16px 0 44px}
+.fc{perspective:1100px;height:252px;cursor:pointer;-webkit-user-select:none;user-select:none}
+.fc-in{position:relative;width:100%;height:100%;transition:transform .55s cubic-bezier(.4,.1,.2,1);transform-style:preserve-3d}
+.fc.flipped .fc-in{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:2.5px solid var(--ink);border-radius:14px;background:var(--paper);padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden}
+.face.front{border-top:10px solid var(--acc)}
+.face .num{position:absolute;top:9px;right:12px;font-size:.72rem;font-weight:800;color:#7b8894}
+.face .ic{width:76px;height:76px;margin-bottom:10px}
+.face .ic svg{width:100%;height:100%}
+.face .term{font-weight:800;font-size:1.05rem}
+.face .hint{position:absolute;bottom:9px;font-size:.68rem;color:#93a0ac;font-weight:800;text-transform:uppercase;letter-spacing:.6px}
+.face.back{transform:rotateY(180deg);background:var(--tint);justify-content:flex-start;padding-top:20px}
+.face.back .bt{font-weight:800;font-size:.92rem;background:var(--acc);color:#fff;border:2px solid var(--ink);border-radius:8px;padding:3px 12px;margin-bottom:11px}
+.face.back p{font-size:.87rem;line-height:1.45;font-weight:500}
+/* ---------- quiz ---------- */
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 4px}
+.fchip{appearance:none;cursor:pointer;border:2.5px solid var(--ink);background:#fff;border-radius:999px;padding:7px 15px;font-weight:800;font-size:.85rem;color:var(--ink)}
+.fchip.active{background:var(--ink);color:#fff}
+.shufrow{display:flex;align-items:center;gap:7px;font-weight:700;font-size:.86rem;margin-left:auto;cursor:pointer}
+.shufrow input{width:16px;height:16px;accent-color:var(--blue)}
+.qshell{max-width:780px;margin:16px auto 50px}
+.pwrap{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.pbar{flex:1;height:13px;background:#d7dee4;border:2px solid var(--ink);border-radius:999px;overflow:hidden}
+.pfill{height:100%;background:var(--green);width:0;transition:width .3s}
+.scorepill{background:#fff;border:2.5px solid var(--ink);border-radius:999px;padding:4px 14px;font-weight:800;font-size:.85rem;white-space:nowrap}
+.qcard{background:#fff;border:2.5px solid var(--ink);border-radius:16px;padding:24px}
+.qtop{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.qn{font-weight:800;color:#67757f;font-size:.86rem}
+.badge{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#fff;border:2px solid var(--ink);border-radius:7px;padding:3px 9px}
+.badge.tf{background:var(--blue)}.badge.mc{background:var(--purple)}.badge.fib{background:var(--orange)}
+.qtext{font-size:1.13rem;font-weight:700;line-height:1.55;margin-bottom:18px}
+.blank{display:inline-block;min-width:130px;border-bottom:3px solid var(--ink);height:1.2em;vertical-align:bottom;text-align:center;font-weight:800}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opts.tf{flex-direction:row}
+.opt{appearance:none;cursor:pointer;text-align:left;border:2.5px solid var(--ink);background:#fff;border-radius:10px;padding:12px 15px;font-size:.98rem;font-weight:600;color:var(--ink);transition:background .15s}
+.opts.tf .opt{flex:1;text-align:center;font-weight:800;font-size:1.02rem}
+.opt:hover:enabled{background:#f0f5fa}
+.opt.good{background:var(--green);color:#fff}
+.opt.bad{background:var(--red);color:#fff}
+.opt.dim{opacity:.5}
+.opt:disabled{cursor:default}
+.fibrow{display:flex;gap:10px;flex-wrap:wrap}
+.fibrow input{flex:1;min-width:200px;border:2.5px solid var(--ink);border-radius:10px;padding:11px 14px;font-size:1rem;font-weight:600;background:#fff;color:var(--ink)}
+.fibrow input:focus{outline:3px solid #bcd6f7}
+.fibrow input.ok{background:#e2f4ea;border-color:var(--green)}
+.fibrow input.no{background:#fbe6e5;border-color:var(--red)}
+.fb{margin-top:16px;border-radius:10px;padding:12px 15px;font-size:.94rem;font-weight:600;display:none}
+.fb.on{display:block}
+.fb.ok{background:#e2f4ea;border:2.5px solid var(--green)}
+.fb.no{background:#fbe6e5;border:2.5px solid var(--red)}
+.qnav{display:flex;justify-content:flex-end;margin-top:16px}
+/* ---------- results ---------- */
+.done{background:#fff;border:2.5px solid var(--ink);border-radius:16px;padding:30px;text-align:center}
+.bigscore{font-size:3.1rem;font-weight:800;color:var(--blue);line-height:1.1}
+.donemsg{font-size:1.05rem;font-weight:700;margin:6px 0 18px}
+.tbreak{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:20px}
+.tb{border:2.5px solid var(--ink);border-radius:10px;padding:8px 16px;font-weight:800;font-size:.88rem;background:var(--bg)}
+.missed{text-align:left;margin:0 auto 22px;max-width:640px;background:var(--bg);border:2.5px solid var(--ink);border-radius:12px;padding:14px 18px}
+.missed summary{cursor:pointer;font-weight:800}
+.missed li{margin:12px 0 0 18px;font-size:.92rem}
+.missed b{color:var(--green)}
+.endbtns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+footer{border-top:3px solid var(--ink);background:#fff;margin-top:10px}
+footer .wrap{padding:16px 20px;font-size:.85rem;color:#5c6b78;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+@media (max-width:560px){h1{font-size:1.55rem}.opts.tf{flex-direction:column}.face .term{font-size:1rem}}
+@media (prefers-reduced-motion: reduce){.fc-in{transition:none}.pfill{transition:none}.btn:hover{transform:none}}
+.flab{font-size:.72rem;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#5a6b7a;margin-right:2px}
+.badge.sertag{background:#eef2f6;color:#41525f}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="#fff" stroke="#22313f" stroke-width="3"/><path d="M32 9l6 20-6-4-6 4z" fill="#e35d5b" stroke="#22313f" stroke-width="2"/><path d="M32 55l-6-20 6 4 6-4z" fill="#22313f"/><circle cx="32" cy="32" r="4" fill="#f0b429" stroke="#22313f" stroke-width="2"/></svg></div>
+      <div>
+        <h1>Geography Study Deck</h1>
+        <div class="sub">Two handwritten card series, digitized — flashcards and quiz</div>
+      </div>
+    </div>
+    <div class="chips">
+      <span class="chip">2 series</span>
+      <span class="chip">56 flashcards</span>
+      <span class="chip">150 questions</span>
+      <span class="chip">True/False &middot; Multiple choice &middot; Fill the blank</span>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs"><div class="wrap">
+  <button class="tabbtn active" data-tab="s1">Series 1 &middot; Maps</button>
+  <button class="tabbtn" data-tab="s2">Series 2 &middot; Data &amp; tools</button>
+  <button class="tabbtn" data-tab="quiz">Quiz</button>
+</div></nav>
+
+<main class="wrap">
+  <section id="view-s1">
+    <div class="bar">
+      <h2>Series 1 — Maps &amp; spatial thinking</h2>
+      <div class="note">The 31 original cards (#1&ndash;31). Click a card to flip it — the definition is on the back.</div>
+      <div class="actions">
+        <button class="btn plain" data-act="shuffle" data-deck="s1">Shuffle</button>
+        <button class="btn plain" data-act="sort" data-deck="s1">Sort #</button>
+        <button class="btn blue" data-act="flipall" data-deck="s1">Flip all</button>
+      </div>
+    </div>
+    <div class="grid" id="grid-s1"></div>
+  </section>
+
+  <section id="view-s2" hidden>
+    <div class="bar">
+      <h2>Series 2 — Geographic data &amp; tools</h2>
+      <div class="note">25 cards (#2&ndash;26) on how geographic data is collected and used. Click a card to flip it.</div>
+      <div class="actions">
+        <button class="btn plain" data-act="shuffle" data-deck="s2">Shuffle</button>
+        <button class="btn plain" data-act="sort" data-deck="s2">Sort #</button>
+        <button class="btn blue" data-act="flipall" data-deck="s2">Flip all</button>
+      </div>
+    </div>
+    <div class="grid" id="grid-s2"></div>
+  </section>
+
+  <section id="view-quiz" hidden>
+    <div class="bar">
+      <h2>Quiz</h2>
+      <div class="note">Pick a series and a question type. Feedback comes after every answer, with a score at the end.</div>
+    </div>
+    <div class="filters">
+      <span class="flab">Series</span>
+      <button class="fchip active" data-ser="s1">Series 1 &middot; Maps</button>
+      <button class="fchip" data-ser="s2">Series 2 &middot; Data &amp; tools</button>
+      <button class="fchip" data-ser="both">Both series</button>
+    </div>
+    <div class="filters">
+      <span class="flab">Type</span>
+      <button class="fchip active" data-mode="all">All &middot; 75</button>
+      <button class="fchip" data-mode="tf">True / False &middot; 25</button>
+      <button class="fchip" data-mode="mc">Multiple choice &middot; 25</button>
+      <button class="fchip" data-mode="fib">Fill the blank &middot; 25</button>
+      <label class="shufrow"><input type="checkbox" id="shufq" checked> Shuffle order</label>
+    </div>
+    <div class="qshell" id="qshell"></div>
+  </section>
+</main>
+
+<footer><div class="wrap">
+  <span>Digitized from two handwritten decks (&ldquo;Leal&rdquo;) — Series 1: 31 cards &middot; Series 2: 25 cards.</span>
+  <span>Single file &middot; no libraries &middot; flat design</span>
+</div></footer>
+
+<script>
+/* ---------------- palette + series 1 icons ---------------- */
+const PAL=[["#3b7dd8","#e3eefb"],["#e35d5b","#fbe6e5"],["#2fa36b","#e2f4ea"],["#ef8a3c","#fceadd"],["#8b64c9","#efe8f9"],["#22a6a1","#e0f4f3"],["#e0a90f","#fbf2d9"]];
+
+const ICONS={
+absdist:'<svg viewBox="0 0 64 64"><circle cx="12" cy="22" r="5" fill="#3b7dd8" stroke="#22313f" stroke-width="3"/><circle cx="52" cy="22" r="5" fill="#e35d5b" stroke="#22313f" stroke-width="3"/><path d="M19 22h26" stroke="#22313f" stroke-width="2.5" stroke-dasharray="4 4"/><rect x="8" y="38" width="48" height="13" rx="2" fill="#f0b429" stroke="#22313f" stroke-width="3"/><path d="M17 38v6M26 38v6M35 38v6M44 38v6" stroke="#22313f" stroke-width="2.5"/></svg>',
+absdir:'<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="24" fill="#fff" stroke="#22313f" stroke-width="3"/><path d="M32 11l5 17-5-3-5 3z" fill="#e35d5b" stroke="#22313f" stroke-width="2"/><path d="M32 53l-5-17 5 3 5-3z" fill="#3b7dd8" stroke="#22313f" stroke-width="2"/><path d="M11 32l17-5-3 5 3 5z" fill="#f0b429" stroke="#22313f" stroke-width="2"/><path d="M53 32l-17 5 3-5-3-5z" fill="#f0b429" stroke="#22313f" stroke-width="2"/><circle cx="32" cy="32" r="3.5" fill="#22313f"/></svg>',
+areadist:'<svg viewBox="0 0 64 64"><path d="M8 30c0-7 4-11 9-11s9 5 9 11-4 10-9 10-9-3-9-10z" fill="#2fa36b" stroke="#22313f" stroke-width="3"/><path d="M29 30h6m-2.5-3.5 3.5 3.5-3.5 3.5" stroke="#22313f" stroke-width="2.5" fill="none"/><path d="M38 32c0-11 5-17 10-17s11 8 11 17-5 15-11 15-10-5-10-15z" fill="#b7e2c8" stroke="#22313f" stroke-width="3" stroke-dasharray="6 4"/></svg>',
+cartogram:'<svg viewBox="0 0 64 64"><path d="M6 26c0-9 7-14 14-14s13 6 13 14-6 13-13 13S6 34 6 26z" fill="#3b7dd8" stroke="#22313f" stroke-width="3"/><path d="M34 45c0-6 4-9 9-9s9 4 9 9-4 8-9 8-9-3-9-8z" fill="#ef8a3c" stroke="#22313f" stroke-width="3"/><path d="M38 20c0-4 3-7 7-7s8 3 8 7-4 7-8 7-7-3-7-7z" fill="#2fa36b" stroke="#22313f" stroke-width="3"/><path d="M12 47c0-3 3-6 7-6s7 3 7 6-3 6-7 6-7-3-7-6z" fill="#f0b429" stroke="#22313f" stroke-width="3"/></svg>',
+cartography:'<svg viewBox="0 0 64 64"><path d="M8 18l16-6 16 6 16-6v34l-16 6-16-6-16 6z" fill="#dcedff" stroke="#22313f" stroke-width="3" stroke-linejoin="round"/><path d="M24 12v34M40 18v34" stroke="#22313f" stroke-width="2.5"/><path d="M30 40l18-18 6 6-18 18-8 2z" fill="#f0b429" stroke="#22313f" stroke-width="2.5" stroke-linejoin="round"/></svg>',
+choropleth:'<svg viewBox="0 0 64 64"><rect x="10" y="12" width="44" height="40" rx="3" fill="#fff" stroke="#22313f" stroke-width="3"/><rect x="12" y="14" width="19" height="17" fill="#3b7dd8" opacity=".25"/><rect x="33" y="14" width="19" height="17" fill="#3b7dd8" opacity=".55"/><rect x="12" y="33" width="19" height="17" fill="#3b7dd8" opacity=".8"/><rect x="33" y="33" width="19" height="17" fill="#3b7dd8"/><path d="M10 32h44M32 12v40" stroke="#22313f" stroke-width="2.5"/></svg>',
+clustering:'<svg viewBox="0 0 64 64"><rect x="8" y="10" width="48" height="44" rx="4" fill="#fff" stroke="#22313f" stroke-width="3"/><g fill="#8b64c9" stroke="#22313f" stroke-width="1.5"><circle cx="20" cy="38" r="4"/><circle cx="27" cy="43" r="4"/><circle cx="19" cy="46" r="4"/><circle cx="26" cy="35" r="4"/><circle cx="33" cy="41" r="4"/><circle cx="24" cy="27" r="4"/><circle cx="45" cy="20" r="3"/></g></svg>',
+cylindrical:'<svg viewBox="0 0 64 64"><circle cx="17" cy="36" r="12" fill="#bfe0ff" stroke="#22313f" stroke-width="3"/><path d="M17 24v24M5 36h24" stroke="#22313f" stroke-width="1.8"/><path d="M32 34h7m-2.5-3.5 3.5 3.5-3.5 3.5" stroke="#22313f" stroke-width="2.5" fill="none"/><path d="M43 18v28c0 2.5 3.4 4 7.5 4s7.5-1.5 7.5-4V18" fill="#f0b429" stroke="#22313f" stroke-width="2.8"/><ellipse cx="50.5" cy="18" rx="7.5" ry="3.6" fill="#fbd77e" stroke="#22313f" stroke-width="2.8"/></svg>',
+dispersal:'<svg viewBox="0 0 64 64"><rect x="8" y="10" width="48" height="44" rx="4" fill="#fff" stroke="#22313f" stroke-width="3"/><g fill="#22a6a1" stroke="#22313f" stroke-width="1.5"><circle cx="16" cy="20" r="3.6"/><circle cx="34" cy="16" r="3.6"/><circle cx="50" cy="24" r="3.6"/><circle cx="22" cy="34" r="3.6"/><circle cx="42" cy="36" r="3.6"/><circle cx="15" cy="47" r="3.6"/><circle cx="33" cy="48" r="3.6"/><circle cx="50" cy="46" r="3.6"/></g></svg>',
+distdist:'<svg viewBox="0 0 64 64"><circle cx="11" cy="32" r="5" fill="#3b7dd8" stroke="#22313f" stroke-width="3"/><circle cx="53" cy="32" r="5" fill="#e35d5b" stroke="#22313f" stroke-width="3"/><path d="M16 32c2-9 6-9 8 0s6 9 8 0 6-9 8 0 6 9 8 0" stroke="#e35d5b" stroke-width="3" fill="none" stroke-linecap="round"/></svg>',
+dotdist:'<svg viewBox="0 0 64 64"><path d="M12 24c0-9 9-14 20-14s20 6 20 15-5 17-13 21-17 3-22-3-5-10-5-19z" fill="#eef7ee" stroke="#22313f" stroke-width="3"/><g fill="#2fa36b"><circle cx="22" cy="22" r="2.7"/><circle cx="31" cy="17" r="2.7"/><circle cx="41" cy="21" r="2.7"/><circle cx="26" cy="30" r="2.7"/><circle cx="36" cy="31" r="2.7"/><circle cx="45" cy="29" r="2.7"/><circle cx="30" cy="40" r="2.7"/><circle cx="39" cy="40" r="2.7"/><circle cx="21" cy="37" r="2.7"/></g></svg>',
+elevation:'<svg viewBox="0 0 64 64"><path d="M6 46L20 22l8 13 7-10 13 21z" fill="#2fa36b" stroke="#22313f" stroke-width="3" stroke-linejoin="round"/><path d="M20 22l-4 7h8z" fill="#fff"/><rect x="6" y="46" width="52" height="8" fill="#bfe0ff" stroke="#22313f" stroke-width="3"/><path d="M6 42h52" stroke="#3b7dd8" stroke-width="2" stroke-dasharray="5 4"/></svg>',
+equalarea:'<svg viewBox="0 0 64 64"><rect x="8" y="18" width="18" height="18" rx="3" fill="#3b7dd8" stroke="#22313f" stroke-width="3"/><rect x="38" y="18" width="18" height="18" rx="3" fill="#ef8a3c" stroke="#22313f" stroke-width="3"/><path d="M29 24h6M29 30h6" stroke="#22313f" stroke-width="3"/><path d="M14 46h36" stroke="#22313f" stroke-width="2.5" stroke-dasharray="4 4"/></svg>',
+gradsym:'<svg viewBox="0 0 64 64"><path d="M8 53h48" stroke="#22313f" stroke-width="3"/><circle cx="15" cy="47" r="5" fill="#ef8a3c" stroke="#22313f" stroke-width="2.5"/><circle cx="31" cy="43" r="9" fill="#ef8a3c" stroke="#22313f" stroke-width="2.5"/><circle cx="50" cy="39" r="13" fill="#ef8a3c" stroke="#22313f" stroke-width="2.5"/></svg>',
+isoline:'<svg viewBox="0 0 64 64"><path d="M10 40c0-14 10-24 22-24s22 8 22 20-10 20-22 20S10 52 10 40z" fill="none" stroke="#3b7dd8" stroke-width="3"/><path d="M18 40c0-9 7-16 14-16s14 6 14 13-7 13-14 13-14-3-14-10z" fill="none" stroke="#3b7dd8" stroke-width="3"/><path d="M26 39c0-4 3-7 6-7s7 3 7 6-3 6-7 6-6-2-6-5z" fill="#bfe0ff" stroke="#3b7dd8" stroke-width="3"/></svg>',
+legend:'<svg viewBox="0 0 64 64"><rect x="10" y="10" width="44" height="44" rx="4" fill="#fff" stroke="#22313f" stroke-width="3"/><rect x="16" y="17" width="8" height="8" fill="#e35d5b"/><path d="M28 21h18" stroke="#22313f" stroke-width="3"/><rect x="16" y="28" width="8" height="8" fill="#3b7dd8"/><path d="M28 32h18" stroke="#22313f" stroke-width="3"/><rect x="16" y="39" width="8" height="8" fill="#2fa36b"/><path d="M28 43h18" stroke="#22313f" stroke-width="3"/></svg>',
+mapproj:'<svg viewBox="0 0 64 64"><circle cx="16" cy="32" r="11" fill="#bfe0ff" stroke="#22313f" stroke-width="3"/><ellipse cx="16" cy="32" rx="4.5" ry="11" fill="none" stroke="#22313f" stroke-width="1.8"/><path d="M5 32h22" stroke="#22313f" stroke-width="1.8"/><path d="M30 32h6m-2.5-3.5 3.5 3.5-3.5 3.5" stroke="#22313f" stroke-width="2.5" fill="none"/><rect x="40" y="18" width="18" height="28" rx="2" fill="#fff" stroke="#22313f" stroke-width="3"/><path d="M40 27h18M40 36h18M46 18v28M52 18v28" stroke="#22313f" stroke-width="1.6"/></svg>',
+mentalmap:'<svg viewBox="0 0 64 64"><circle cx="24" cy="36" r="14" fill="#f6d7b0" stroke="#22313f" stroke-width="3"/><circle cx="20" cy="33" r="2" fill="#22313f"/><path d="M20 42c2 2 6 2 8 0" stroke="#22313f" stroke-width="2.5" fill="none" stroke-linecap="round"/><rect x="36" y="10" width="20" height="16" rx="4" fill="#fff" stroke="#22313f" stroke-width="2.5"/><path d="M40 22c3-6 5 2 8-4s4 2 4 2" stroke="#e35d5b" stroke-width="2.2" fill="none" stroke-dasharray="3 2"/><circle cx="40" cy="21" r="1.6" fill="#3b7dd8"/><circle cx="52" cy="19" r="1.6" fill="#2fa36b"/><path d="M38 27l-4 5" stroke="#22313f" stroke-width="2.5"/></svg>',
+mercator:'<svg viewBox="0 0 64 64"><rect x="8" y="12" width="48" height="40" rx="2" fill="#bfe0ff" stroke="#22313f" stroke-width="3"/><path d="M8 22h48M8 32h48M8 42h48M20 12v40M32 12v40M44 12v40" stroke="#fff" stroke-width="1.6"/><path d="M12 15c7-3 18-2 21 2s-1 6-7 6-13 0-15-3-1-4 1-5z" fill="#2fa36b" stroke="#22313f" stroke-width="2"/><path d="M31 45c3-2 8-2 9 1s-2 4-5 4-6-1-6-3 1-2 2-2z" fill="#2fa36b" stroke="#22313f" stroke-width="2"/></svg>',
+peters:'<svg viewBox="0 0 64 64"><rect x="8" y="12" width="48" height="40" rx="2" fill="#dcedff" stroke="#22313f" stroke-width="3"/><path d="M18 16c4 0 6 5 6 14s-2 16-6 16-6-7-6-16 2-14 6-14z" fill="#2fa36b" stroke="#22313f" stroke-width="2.2"/><path d="M40 18c5 0 8 4 8 12s-3 18-8 18-7-9-7-18 2-12 7-12z" fill="#2fa36b" stroke="#22313f" stroke-width="2.2"/></svg>',
+physmap:'<svg viewBox="0 0 64 64"><rect x="8" y="10" width="48" height="44" rx="4" fill="#eef7ee" stroke="#22313f" stroke-width="3"/><path d="M14 44l10-16 7 10 5-7 10 13z" fill="#8a5a44" stroke="#22313f" stroke-width="2.5" stroke-linejoin="round"/><path d="M24 28l-3.4 5.6h6.8z" fill="#fff"/><path d="M14 20c6 3 10-3 16 0s10-3 16 0" stroke="#3b7dd8" stroke-width="2.6" fill="none"/></svg>',
+polmap:'<svg viewBox="0 0 64 64"><rect x="8" y="10" width="48" height="44" rx="4" fill="#fdf3d7" stroke="#22313f" stroke-width="3"/><path d="M28 10c-2 8 4 12-2 18s-2 12-6 16M28 28c8-2 14 4 20 2" stroke="#22313f" stroke-width="2.2" fill="none" stroke-dasharray="5 3"/><path d="M20 22l1.8 3.6 4 .6-2.9 2.8.7 4-3.6-1.9-3.6 1.9.7-4-2.9-2.8 4-.6z" fill="#e35d5b" stroke="#22313f" stroke-width="1.5"/><circle cx="42" cy="42" r="3" fill="#3b7dd8" stroke="#22313f" stroke-width="1.5"/></svg>',
+refmap:'<svg viewBox="0 0 64 64"><path d="M8 20l16-6 16 6 16-6v30l-16 6-16-6-16 6z" fill="#dcedff" stroke="#22313f" stroke-width="3" stroke-linejoin="round"/><path d="M24 14v30M40 20v30" stroke="#22313f" stroke-width="2"/><path d="M44 12c-6 0-10 4-10 10 0 7 10 16 10 16s10-9 10-16c0-6-4-10-10-10z" fill="#e35d5b" stroke="#22313f" stroke-width="2.5"/><circle cx="44" cy="22" r="3.5" fill="#fff"/></svg>',
+reldist:'<svg viewBox="0 0 64 64"><circle cx="22" cy="30" r="14" fill="#fff" stroke="#22313f" stroke-width="3"/><path d="M22 21v9l6 4" stroke="#22313f" stroke-width="2.6" fill="none" stroke-linecap="round"/><circle cx="45" cy="42" r="11" fill="#f0b429" stroke="#22313f" stroke-width="3"/><circle cx="45" cy="42" r="6" fill="none" stroke="#22313f" stroke-width="2"/></svg>',
+reldir:'<svg viewBox="0 0 64 64"><circle cx="32" cy="20" r="6" fill="#f6d7b0" stroke="#22313f" stroke-width="2.6"/><path d="M32 26v14M32 30l-6 6M32 30l6 6M32 40l-5 9M32 40l5 9" stroke="#22313f" stroke-width="2.6" stroke-linecap="round"/><path d="M18 32H6m3-3-3 3 3 3" stroke="#3b7dd8" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M46 32h12m-3-3 3 3-3 3" stroke="#e35d5b" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+scale:'<svg viewBox="0 0 64 64"><rect x="8" y="28" width="48" height="9" fill="#fff" stroke="#22313f" stroke-width="3"/><rect x="8" y="28" width="12" height="9" fill="#22313f"/><rect x="32" y="28" width="12" height="9" fill="#22313f"/><path d="M8 24v-4M32 24v-4M56 24v-4" stroke="#22313f" stroke-width="2.4"/><path d="M12 46h40" stroke="#3b7dd8" stroke-width="2.6" stroke-dasharray="5 4"/></svg>',
+shapedist:'<svg viewBox="0 0 64 64"><rect x="8" y="22" width="18" height="18" rx="2" fill="#8b64c9" stroke="#22313f" stroke-width="3"/><path d="M30 31h6m-2.5-3.5 3.5 3.5-3.5 3.5" stroke="#22313f" stroke-width="2.5" fill="none"/><path d="M42 20l16 6-4 16-16-4z" fill="#d9c8f2" stroke="#22313f" stroke-width="3" stroke-linejoin="round"/></svg>',
+spanalysis:'<svg viewBox="0 0 64 64"><g fill="#22a6a1"><circle cx="16" cy="18" r="3"/><circle cx="28" cy="14" r="3"/><circle cx="44" cy="20" r="3"/><circle cx="18" cy="34" r="3"/><circle cx="50" cy="38" r="3"/></g><circle cx="32" cy="34" r="13" fill="#eaf3ff" fill-opacity=".85" stroke="#22313f" stroke-width="3"/><path d="M41 43l11 11" stroke="#22313f" stroke-width="5" stroke-linecap="round"/><circle cx="30" cy="32" r="2.6" fill="#e35d5b"/><circle cx="36" cy="38" r="2.6" fill="#e35d5b"/></svg>',
+spattern:'<svg viewBox="0 0 64 64"><g stroke="#22313f" stroke-width="2"><circle cx="14" cy="14" r="4.5" fill="#3b7dd8"/><rect x="27.5" y="9.5" width="9" height="9" rx="2" fill="#f0b429"/><circle cx="50" cy="14" r="4.5" fill="#3b7dd8"/><rect x="9.5" y="27.5" width="9" height="9" rx="2" fill="#f0b429"/><circle cx="32" cy="32" r="4.5" fill="#3b7dd8"/><rect x="45.5" y="27.5" width="9" height="9" rx="2" fill="#f0b429"/><circle cx="14" cy="50" r="4.5" fill="#3b7dd8"/><rect x="27.5" y="45.5" width="9" height="9" rx="2" fill="#f0b429"/><circle cx="50" cy="50" r="4.5" fill="#3b7dd8"/></g></svg>',
+thematic:'<svg viewBox="0 0 64 64"><rect x="8" y="10" width="48" height="44" rx="4" fill="#fff" stroke="#22313f" stroke-width="3"/><ellipse cx="24" cy="26" rx="11" ry="8" fill="#f8c9c4"/><ellipse cx="24" cy="26" rx="6.5" ry="4.5" fill="#e35d5b"/><ellipse cx="43" cy="40" rx="10" ry="7" fill="#fbe3bd"/><ellipse cx="43" cy="40" rx="5.5" ry="3.8" fill="#f0b429"/></svg>',
+topo:'<svg viewBox="0 0 64 64"><path d="M12 36c0-13 9-22 20-22s20 8 20 19-9 19-20 19-20-4-20-16z" fill="none" stroke="#8a5a44" stroke-width="2.6"/><path d="M18 36c0-9 6-15 14-15s14 5 14 13-6 13-14 13-14-3-14-11z" fill="none" stroke="#8a5a44" stroke-width="2.6"/><path d="M24 35c0-5 4-9 8-9s8 3 8 8-4 8-8 8-8-2-8-7z" fill="none" stroke="#8a5a44" stroke-width="2.6"/><path d="M29 34c0-2.5 1.6-4 3-4s3 1.5 3 3.5-1.6 3.5-3 3.5-3-1-3-3z" fill="#8a5a44"/></svg>'
+};
+
+/* ---------------- series 2 icons ---------------- */
+const ICONS2={
+crowd:'<svg viewBox="0 0 64 64"><circle cx="15" cy="30" r="6" fill="#f6d7b0" stroke="#22313f" stroke-width="2.4"/><path d="M5 50c0-6 4-9 10-9s10 3 10 9z" fill="#3b7dd8" stroke="#22313f" stroke-width="2.4"/><circle cx="49" cy="30" r="6" fill="#f6d7b0" stroke="#22313f" stroke-width="2.4"/><path d="M39 50c0-6 4-9 10-9s10 3 10 9z" fill="#2fa36b" stroke="#22313f" stroke-width="2.4"/><circle cx="32" cy="27" r="6.5" fill="#f6d7b0" stroke="#22313f" stroke-width="2.4"/><path d="M21 50c0-6.5 5-10 11-10s11 3.5 11 10z" fill="#e35d5b" stroke="#22313f" stroke-width="2.4"/><path d="M32 3c-4 0-7 3-7 7 0 5 7 11 7 11s7-6 7-11c0-4-3-7-7-7z" fill="#f0b429" stroke="#22313f" stroke-width="2.2"/><circle cx="32" cy="10" r="2.4" fill="#fff"/></svg>',
+aggr:'<svg viewBox="0 0 64 64"><rect x="7" y="7" width="12" height="12" rx="2" fill="#3b7dd8" stroke="#22313f" stroke-width="2.4"/><rect x="26" y="7" width="12" height="12" rx="2" fill="#e35d5b" stroke="#22313f" stroke-width="2.4"/><rect x="45" y="7" width="12" height="12" rx="2" fill="#f0b429" stroke="#22313f" stroke-width="2.4"/><path d="M13 21l15 12M32 21v12M51 21L36 33" stroke="#22313f" stroke-width="2.4" fill="none"/><rect x="19" y="36" width="26" height="21" rx="3" fill="#2fa36b" stroke="#22313f" stroke-width="3"/></svg>',
+fieldobs:'<svg viewBox="0 0 64 64"><rect x="7" y="10" width="27" height="43" rx="3" fill="#fff" stroke="#22313f" stroke-width="3"/><rect x="14" y="6" width="13" height="8" rx="2" fill="#f0b429" stroke="#22313f" stroke-width="2.2"/><path d="M12 24h17M12 32h17M12 40h11" stroke="#22313f" stroke-width="2.3"/><path d="M38 52h20" stroke="#22313f" stroke-width="2.6"/><path d="M48 34v18" stroke="#8a5a44" stroke-width="4"/><circle cx="48" cy="26" r="10" fill="#2fa36b" stroke="#22313f" stroke-width="2.4"/></svg>',
+gis:'<svg viewBox="0 0 64 64"><path d="M32 6L57 17 32 28 7 17z" fill="#3b7dd8" stroke="#22313f" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 21L57 32 32 43 7 32z" fill="#f0b429" stroke="#22313f" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 36L57 47 32 58 7 47z" fill="#2fa36b" stroke="#22313f" stroke-width="2.5" stroke-linejoin="round"/></svg>',
+geodata:'<svg viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="4" fill="#fff" stroke="#22313f" stroke-width="3"/><path d="M8 24h48M8 40h48M24 8v48M40 8v48" stroke="#d4dfe9" stroke-width="2"/><path d="M32 13c-7 0-12 5-12 12 0 9 12 23 12 23s12-14 12-23c0-7-5-12-12-12z" fill="#e35d5b" stroke="#22313f" stroke-width="2.8"/><circle cx="32" cy="25" r="4.5" fill="#fff"/></svg>',
+groundtruth:'<svg viewBox="0 0 64 64"><rect x="41" y="6" width="13" height="9" rx="2" fill="#8b64c9" stroke="#22313f" stroke-width="2.2"/><rect x="34" y="8" width="6" height="5" fill="#f0b429" stroke="#22313f" stroke-width="1.8"/><rect x="55" y="8" width="6" height="5" fill="#f0b429" stroke="#22313f" stroke-width="1.8"/><path d="M45 17L30 36" stroke="#8b64c9" stroke-width="2.2" stroke-dasharray="4 3"/><path d="M6 52h52" stroke="#22313f" stroke-width="3"/><path d="M22 32c-5 0-8 3.4-8 8 0 5 8 12 8 12s8-7 8-12c0-4.6-3-8-8-8z" fill="#e35d5b" stroke="#22313f" stroke-width="2.5"/><circle cx="22" cy="40" r="2.8" fill="#fff"/><path d="M38 42l6 7 12-14" fill="none" stroke="#2fa36b" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+media:'<svg viewBox="0 0 64 64"><rect x="7" y="12" width="41" height="40" rx="3" fill="#fff" stroke="#22313f" stroke-width="3"/><path d="M48 20h6a2 2 0 0 1 2 2v24a6 6 0 0 1-6 6" fill="none" stroke="#22313f" stroke-width="3"/><rect x="13" y="18" width="13" height="11" fill="#3b7dd8"/><path d="M30 20h12M30 26h12M13 35h29M13 41h29M13 47h18" stroke="#22313f" stroke-width="2.2"/></svg>',
+onlinemap:'<svg viewBox="0 0 64 64"><rect x="5" y="9" width="54" height="46" rx="4" fill="#fff" stroke="#22313f" stroke-width="3"/><path d="M5 19h54" stroke="#22313f" stroke-width="2.5"/><circle cx="11" cy="14" r="1.8" fill="#e35d5b"/><circle cx="17" cy="14" r="1.8" fill="#f0b429"/><circle cx="23" cy="14" r="1.8" fill="#2fa36b"/><path d="M11 49V27l13-4 15 5 14-5v22l-14 5-15-5z" fill="#dcedff" stroke="#22313f" stroke-width="2.3" stroke-linejoin="round"/><path d="M24 23v22M39 28v22" stroke="#22313f" stroke-width="1.7"/></svg>',
+pgis:'<svg viewBox="0 0 64 64"><path d="M8 18l16-6 16 6 16-6v34l-16 6-16-6-16 6z" fill="#e2f4ea" stroke="#22313f" stroke-width="3" stroke-linejoin="round"/><path d="M24 12v34M40 18v34" stroke="#22313f" stroke-width="2"/><circle cx="21" cy="27" r="4.2" fill="#f6d7b0" stroke="#22313f" stroke-width="2"/><path d="M14 39c0-4 3-6.5 7-6.5s7 2.5 7 6.5z" fill="#3b7dd8" stroke="#22313f" stroke-width="2"/><circle cx="43" cy="25" r="4.2" fill="#f6d7b0" stroke="#22313f" stroke-width="2"/><path d="M36 37c0-4 3-6.5 7-6.5s7 2.5 7 6.5z" fill="#e35d5b" stroke="#22313f" stroke-width="2"/></svg>',
+interviews:'<svg viewBox="0 0 64 64"><rect x="5" y="8" width="35" height="21" rx="5" fill="#3b7dd8" stroke="#22313f" stroke-width="2.5"/><path d="M13 29l-2 8 10-8" fill="#3b7dd8" stroke="#22313f" stroke-width="2.5" stroke-linejoin="round"/><path d="M12 16h21M12 22h14" stroke="#fff" stroke-width="2.4"/><rect x="24" y="33" width="35" height="21" rx="5" fill="#fff" stroke="#22313f" stroke-width="2.5"/><path d="M51 54l2 8-10-8" fill="#fff" stroke="#22313f" stroke-width="2.5" stroke-linejoin="round"/><path d="M31 41h21M31 47h14" stroke="#22313f" stroke-width="2.4"/></svg>',
+photointerp:'<svg viewBox="0 0 64 64"><rect x="5" y="9" width="42" height="33" rx="3" fill="#bfe0ff" stroke="#22313f" stroke-width="3"/><path d="M9 38l11-15 7 9 5-6 11 12z" fill="#2fa36b" stroke="#22313f" stroke-width="2.2" stroke-linejoin="round"/><circle cx="15" cy="17" r="3.5" fill="#f0b429" stroke="#22313f" stroke-width="1.8"/><circle cx="42" cy="41" r="11" fill="#fff" fill-opacity=".82" stroke="#22313f" stroke-width="3"/><path d="M50 49l9 9" stroke="#22313f" stroke-width="5" stroke-linecap="round"/></svg>',
+policy:'<svg viewBox="0 0 64 64"><path d="M14 5h26l10 10v43H14z" fill="#fff" stroke="#22313f" stroke-width="3" stroke-linejoin="round"/><path d="M40 5v10h10" fill="none" stroke="#22313f" stroke-width="2.5"/><path d="M20 23h18M20 30h24M20 37h24" stroke="#22313f" stroke-width="2.2"/><circle cx="26" cy="47" r="5" fill="#e35d5b" stroke="#22313f" stroke-width="2.2"/><path d="M23 51l-2 9 5-3 5 3-2-9" fill="#e35d5b" stroke="#22313f" stroke-width="2" stroke-linejoin="round"/></svg>',
+qual:'<svg viewBox="0 0 64 64"><path d="M9 9h46v31H30L17 52V40H9z" fill="#8b64c9" stroke="#22313f" stroke-width="3" stroke-linejoin="round"/><path d="M17 19h30M17 26h30M17 33h18" stroke="#fff" stroke-width="2.6"/></svg>',
+quant:'<svg viewBox="0 0 64 64"><path d="M10 7v47h47" fill="none" stroke="#22313f" stroke-width="3"/><rect x="17" y="34" width="9" height="20" fill="#3b7dd8" stroke="#22313f" stroke-width="2.2"/><rect x="30" y="22" width="9" height="32" fill="#f0b429" stroke="#22313f" stroke-width="2.2"/><rect x="43" y="13" width="9" height="41" fill="#e35d5b" stroke="#22313f" stroke-width="2.2"/></svg>',
+remote:'<svg viewBox="0 0 64 64"><rect x="26" y="7" width="12" height="9" rx="2" fill="#8b64c9" stroke="#22313f" stroke-width="2.3"/><rect x="12" y="9" width="11" height="5" fill="#f0b429" stroke="#22313f" stroke-width="1.9"/><rect x="41" y="9" width="11" height="5" fill="#f0b429" stroke="#22313f" stroke-width="1.9"/><path d="M28 19l-6 15M32 19v17M36 19l6 15" stroke="#3b7dd8" stroke-width="2.2" stroke-dasharray="3 3" fill="none"/><path d="M2 62c4-14 16-22 30-22s26 8 30 22z" fill="#2fa36b" stroke="#22313f" stroke-width="2.6"/></svg>',
+satimg:'<svg viewBox="0 0 64 64"><rect x="24" y="3" width="12" height="8" rx="2" fill="#8b64c9" stroke="#22313f" stroke-width="2.1"/><rect x="11" y="4.5" width="10" height="5" fill="#f0b429" stroke="#22313f" stroke-width="1.8"/><rect x="39" y="4.5" width="10" height="5" fill="#f0b429" stroke="#22313f" stroke-width="1.8"/><path d="M29 11l-8 9M35 11l8 9" stroke="#8b64c9" stroke-width="2" stroke-dasharray="3 2"/><rect x="10" y="22" width="44" height="35" rx="3" fill="#fff" stroke="#22313f" stroke-width="3"/><rect x="15" y="27" width="34" height="25" fill="#bfe0ff"/><path d="M15 52l9-11 6 7 5-5 14 9z" fill="#2fa36b" stroke="#22313f" stroke-width="2"/></svg>',
+gps:'<svg viewBox="0 0 64 64"><rect x="26" y="3" width="12" height="8" rx="2" fill="#8b64c9" stroke="#22313f" stroke-width="2.1"/><rect x="14" y="4.5" width="9" height="5" fill="#f0b429" stroke="#22313f" stroke-width="1.8"/><rect x="41" y="4.5" width="9" height="5" fill="#f0b429" stroke="#22313f" stroke-width="1.8"/><path d="M32 11v7" stroke="#8b64c9" stroke-width="2" stroke-dasharray="3 2"/><rect x="20" y="19" width="24" height="40" rx="5" fill="#22313f"/><rect x="24" y="24" width="16" height="28" rx="2" fill="#bfe0ff"/><path d="M32 28c-3.5 0-6 2.5-6 6 0 4.6 6 11 6 11s6-6.4 6-11c0-3.5-2.5-6-6-6z" fill="#e35d5b" stroke="#22313f" stroke-width="1.8"/><circle cx="32" cy="34" r="2.2" fill="#fff"/></svg>',
+scaleanal:'<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="25" fill="none" stroke="#3b7dd8" stroke-width="3"/><circle cx="32" cy="32" r="16.5" fill="none" stroke="#f0b429" stroke-width="3"/><circle cx="32" cy="32" r="8.5" fill="none" stroke="#e35d5b" stroke-width="3"/><circle cx="32" cy="32" r="3" fill="#22313f"/></svg>',
+spatinfo:'<svg viewBox="0 0 64 64"><rect x="6" y="6" width="52" height="52" rx="4" fill="#fff" stroke="#22313f" stroke-width="3"/><path d="M6 23h52M6 40h52M23 6v52M40 6v52" stroke="#e2e9f0" stroke-width="2"/><path d="M18 44L32 19l14 27" fill="none" stroke="#22a6a1" stroke-width="2.4"/><circle cx="18" cy="44" r="4.5" fill="#22a6a1" stroke="#22313f" stroke-width="2"/><circle cx="32" cy="19" r="4.5" fill="#e35d5b" stroke="#22313f" stroke-width="2"/><circle cx="46" cy="46" r="4.5" fill="#f0b429" stroke="#22313f" stroke-width="2"/></svg>',
+survey:'<svg viewBox="0 0 64 64"><circle cx="19" cy="15" r="5.5" fill="#f0b429" stroke="#22313f" stroke-width="2.5"/><path d="M19 21v8M19 29L9 54M19 29l10 25M19 29v25" stroke="#22313f" stroke-width="2.7" fill="none"/><path d="M25 14l24 12" stroke="#e35d5b" stroke-width="2.1" stroke-dasharray="4 3"/><path d="M51 52V26" stroke="#22313f" stroke-width="2.5"/><path d="M51 26l10 4-10 4z" fill="#e35d5b" stroke="#22313f" stroke-width="2"/><path d="M4 54h56" stroke="#22313f" stroke-width="2.6"/></svg>',
+timespace:'<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="15" fill="#fff" stroke="#22313f" stroke-width="3"/><path d="M32 23v9l7 4" stroke="#22313f" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M4 32h10m-4.5-4.5L14 32l-4.5 4.5" stroke="#e35d5b" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M60 32H50m4.5-4.5L50 32l4.5 4.5" stroke="#e35d5b" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 4v6M32 60v-6" stroke="#3b7dd8" stroke-width="2.8" stroke-linecap="round"/></svg>',
+urban:'<svg viewBox="0 0 64 64"><path d="M4 56h56" stroke="#22313f" stroke-width="3"/><rect x="8" y="26" width="14" height="30" fill="#3b7dd8" stroke="#22313f" stroke-width="2.5"/><rect x="26" y="13" width="14" height="43" fill="#e35d5b" stroke="#22313f" stroke-width="2.5"/><rect x="44" y="34" width="12" height="22" fill="#f0b429" stroke="#22313f" stroke-width="2.5"/><g fill="#fff"><rect x="11" y="31" width="3.5" height="4"/><rect x="17" y="31" width="3.5" height="4"/><rect x="11" y="39" width="3.5" height="4"/><rect x="17" y="39" width="3.5" height="4"/><rect x="29" y="18" width="3.5" height="4"/><rect x="35" y="18" width="3.5" height="4"/><rect x="29" y="26" width="3.5" height="4"/><rect x="35" y="26" width="3.5" height="4"/><rect x="29" y="34" width="3.5" height="4"/><rect x="35" y="34" width="3.5" height="4"/><rect x="47" y="39" width="3" height="3.5"/><rect x="52" y="39" width="3" height="3.5"/></g></svg>',
+visual:'<svg viewBox="0 0 64 64"><rect x="8" y="9" width="48" height="35" rx="4" fill="#fff" stroke="#22313f" stroke-width="3"/><path d="M14 37l10-11 8 6 12-15" fill="none" stroke="#e35d5b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 44v6M21 55h22" stroke="#22313f" stroke-width="3"/></svg>',
+weather:'<svg viewBox="0 0 64 64"><circle cx="21" cy="19" r="9" fill="#f0b429" stroke="#22313f" stroke-width="2.5"/><path d="M21 4v4M6 19h4M9 8l3 3M33 8l-3 3" stroke="#22313f" stroke-width="2.3" stroke-linecap="round"/><path d="M23 39c0-6 5-10 11-10 5 0 9 3 10 8 4 0 9 3 9 8 0 4-4 8-9 8H30c-5 0-9-4-9-8 0-3 1-5 2-6z" fill="#fff" stroke="#22313f" stroke-width="2.7"/><path d="M30 56l-2 5M40 56l-2 5M50 56l-2 5" stroke="#3b7dd8" stroke-width="2.7" stroke-linecap="round"/></svg>',
+zoning:'<svg viewBox="0 0 64 64"><path d="M8 8h22v22H8z" fill="#3b7dd8"/><path d="M30 8h26v22H30z" fill="#f0b429"/><path d="M8 30h22v26H8z" fill="#2fa36b"/><path d="M30 30h26v26H30z" fill="#e35d5b"/><path d="M8 30h48M30 8v48" stroke="#fff" stroke-width="2.4"/><rect x="8" y="8" width="48" height="48" rx="4" fill="none" stroke="#22313f" stroke-width="3"/></svg>'
+};
+Object.assign(ICONS,ICONS2);
+
+/* ---------------- series 1: the 31 cards ---------------- */
+const TERMS=[
+{n:1,t:"Absolute Distance",d:"The exact measurement of the physical space between two points, typically in units like miles or kilometers.",ic:"absdist"},
+{n:2,t:"Absolute Direction",d:"A fixed compass direction — north, south, east and west — that does not depend on where you stand.",ic:"absdir"},
+{n:3,t:"Area Distortion",d:"The alteration of the true size of areas on a map, caused by the map projection process.",ic:"areadist"},
+{n:4,t:"Cartogram",d:"A thematic map that distorts the geographic shape of places to represent data, such as population size or economic output.",ic:"cartogram"},
+{n:5,t:"Cartography",d:"The science and art of mapmaking.",ic:"cartography"},
+{n:6,t:"Choropleth Map",d:"A thematic map where areas are shaded or patterned in proportion to the value of a statistical variable.",ic:"choropleth"},
+{n:7,t:"Clustering",d:"A spatial pattern where data points or features are grouped closely together in a specific area.",ic:"clustering"},
+{n:8,t:"Cylindrical Projection",d:"A projection where the surface of the globe is projected onto a cylinder, commonly producing shape and area distortions.",ic:"cylindrical"},
+{n:9,t:"Dispersal",d:"A spatial pattern where data points or features are spread out over a wide area.",ic:"dispersal"},
+{n:10,t:"Distance Distortion",d:"The alteration of the true physical distance between two locations on a map.",ic:"distdist"},
+{n:11,t:"Dot Distribution Map",d:"A thematic map that uses dots to represent the frequency of a phenomenon.",ic:"dotdist"},
+{n:12,t:"Elevation",d:"The height above sea level, often shown on maps through contour lines or shading.",ic:"elevation"},
+{n:13,t:"Equal-Area Projection",d:"A projection that keeps the true size of landmasses, but may distort shapes, distances or direction.",ic:"equalarea"},
+{n:14,t:"Graduated Symbol Map",d:"A thematic map that uses symbols of varying sizes to represent data values.",ic:"gradsym"},
+{n:15,t:"Isoline Map",d:"A thematic map with lines that connect points of equal value, such as elevation or temperature.",ic:"isoline"},
+{n:16,t:"Legend (Map Key)",d:"A visual explanation of the symbols, colors and patterns used on a map.",ic:"legend"},
+{n:17,t:"Map Projection",d:"A method for representing the curved surface of the Earth on a flat map, often causing distortions in shape, area, distance or direction.",ic:"mapproj"},
+{n:18,t:"Mental Map",d:"A person\u2019s own perception of spatial relationships and geography, carried in their mind.",ic:"mentalmap"},
+{n:19,t:"Mercator Projection",d:"A cylindrical projection that preserves direction but distorts the size of landmasses, particularly near the poles.",ic:"mercator"},
+{n:20,t:"Peters Projection",d:"A projection that maintains area accuracy but distorts shapes, especially near the equator.",ic:"peters"},
+{n:21,t:"Physical Map",d:"A reference map that shows physical features such as mountains, rivers and deserts.",ic:"physmap"},
+{n:22,t:"Political Map",d:"A reference map that shows boundaries, cities and other human-made features.",ic:"polmap"},
+{n:23,t:"Reference Map",d:"A map that shows general geographic information, such as physical or political features, used to locate places.",ic:"refmap"},
+{n:24,t:"Relative Distance",d:"An approximate measure of distance expressed in terms of cost, time or orientation context.",ic:"reldist"},
+{n:25,t:"Relative Direction",d:"Directions such as \u201cleft\u201d, \u201cright\u201d, \u201cup\u201d or \u201cdown\u201d, based on a person\u2019s orientation or context.",ic:"reldir"},
+{n:26,t:"Scale",d:"The relationship between distance on the map and the actual distance on the ground.",ic:"scale"},
+{n:27,t:"Shape Distortion",d:"The alteration of the true shape of landmasses or features on a map, due to the projection.",ic:"shapedist"},
+{n:28,t:"Spatial Analysis",d:"The examination of spatial patterns and relationships on the Earth\u2019s surface.",ic:"spanalysis"},
+{n:29,t:"Spatial Pattern",d:"The arrangement of objects, features or phenomena in a specific space.",ic:"spattern"},
+{n:30,t:"Thematic Map",d:"A map that focuses on a specific theme or subject, such as population density.",ic:"thematic"},
+{n:31,t:"Topographic Map",d:"A type of physical map that uses contour lines to show elevation changes.",ic:"topo"}
+];
+
+/* ---------------- series 2: the 25 cards (numbering as on the physical deck; #1 was not in the photos) ---------------- */
+const TERMS2=[
+{n:2,t:"Crowdsourced Data",d:"Information gathered from a large group of people, often through online platforms, for geographic analysis.",ic:"crowd"},
+{n:3,t:"Data Aggregation",d:"The process of compiling and summarizing data, often for analysis or presentation at a larger scale.",ic:"aggr"},
+{n:4,t:"Field Observations",d:"The collection of data about geographic phenomena through direct observation in the natural environment.",ic:"fieldobs"},
+{n:5,t:"Geographic Information System (GIS)",d:"A computer system that captures, stores, analyzes and visualizes geographic data.",ic:"gis"},
+{n:6,t:"Geospatial Data",d:"Information that identifies the geographic location and characteristics of features and boundaries on Earth, typically represented by coordinates.",ic:"geodata"},
+{n:7,t:"Ground Truthing",d:"The process of validating remote sensing data by comparing it with observations made directly on the ground.",ic:"groundtruth"},
+{n:8,t:"Media Reports",d:"Geographic information derived from news outlets, such as newspapers, television or online broadcasts.",ic:"media"},
+{n:9,t:"Online Mapping",d:"The use of internet-based tools and platforms to create, share and interact with maps and spatial data.",ic:"onlinemap"},
+{n:10,t:"Participatory GIS (PGIS)",d:"An approach to geographic data collection where community members contribute local knowledge to GIS projects.",ic:"pgis"},
+{n:11,t:"Personal Interviews",d:"A qualitative data collection method where individuals are asked questions to gather geographic information and perspectives.",ic:"interviews"},
+{n:12,t:"Photographic Interpretation",d:"The analysis of photographs, often aerial or satellite images, to gather geographic data about a region.",ic:"photointerp"},
+{n:13,t:"Policy Documents",d:"Official government or organizational papers that communicate geographic data and guide planning and decision-making.",ic:"policy"},
+{n:14,t:"Qualitative Data",d:"Non-numerical information that describes qualities or characteristics, often gathered through interviews or observations.",ic:"qual"},
+{n:15,t:"Quantitative Data",d:"Numerical information that can be measured and analyzed statistically.",ic:"quant"},
+{n:16,t:"Remote Sensing",d:"The process of gathering information about the Earth's surface from a distance, often through satellites or aircraft.",ic:"remote"},
+{n:17,t:"Satellite Imagery",d:"Images of the Earth's surface collected by satellites, used for geographic analysis and monitoring change.",ic:"satimg"},
+{n:18,t:"Satellite Navigation System (GPS)",d:"A system of satellites that provides geolocation and time information to receivers on Earth.",ic:"gps"},
+{n:19,t:"Scale of Analysis",d:"The level of detail or scope at which geographic data is examined, such as local, regional or global.",ic:"scaleanal"},
+{n:20,t:"Spatial Information",d:"Data that describes the location, shape and relationships of features on the Earth's surface.",ic:"spatinfo"},
+{n:21,t:"Surveying",d:"The technique of measuring distances, angles and positions on Earth to create maps and determine land features.",ic:"survey"},
+{n:22,t:"Time-Space Compression",d:"The reduction in the time and cost it takes to move people, goods and information across distances, thanks to advances in technology.",ic:"timespace"},
+{n:23,t:"Urban Planning",d:"The use of geographic data to design and organize urban areas for efficiency, sustainability and livability.",ic:"urban"},
+{n:24,t:"Visualization",d:"The graphical representation of geographic data through maps, graphs or 3D models.",ic:"visual"},
+{n:25,t:"Weather Data",d:"Information about atmospheric conditions, often used for geographic analysis and environmental decision-making.",ic:"weather"},
+{n:26,t:"Zoning Maps",d:"Maps that designate land for specific purposes, such as residential, commercial or industrial use.",ic:"zoning"}
+];
+
+/* ---------------- series 1 questions ---------------- */
+const QS=[
+/* true / false */
+{k:"tf",q:"A cartogram distorts the shape of places so that their size reflects a data value, like population.",a:true,ex:"That is exactly what a cartogram does \u2014 area on the map represents the data, not the real land area."},
+{k:"tf",q:"The Mercator projection shows the true size of landmasses near the poles.",a:false,ex:"Mercator inflates areas near the poles \u2014 Greenland ends up looking close to the size of Africa."},
+{k:"tf",q:"Absolute distance is measured in standard units such as kilometers or miles.",a:true,ex:"Absolute distance is the exact physical measurement between two points."},
+{k:"tf",q:"A mental map is an official map published by a government mapping agency.",a:false,ex:"A mental map exists only in a person\u2019s head \u2014 it is their own perception of space."},
+{k:"tf",q:"Choropleth maps use dots to show how often a phenomenon occurs.",a:false,ex:"Choropleth maps shade areas; dot distribution maps are the ones built from dots."},
+{k:"tf",q:"Elevation is the height of the land above sea level.",a:true,ex:"Correct \u2014 and maps often show it with contour lines or shading."},
+{k:"tf",q:"The Peters projection keeps areas accurate but stretches shapes, especially near the equator.",a:true,ex:"Peters trades correct shapes for correct areas."},
+{k:"tf",q:"A political map is a type of thematic map.",a:false,ex:"A political map is a reference map \u2014 it shows general features like boundaries and cities, not one data theme."},
+{k:"tf",q:"Isoline maps connect points that share the same value, such as temperature or elevation.",a:true,ex:"Isolines join equal values \u2014 think of contour lines or lines of equal temperature."},
+{k:"tf",q:"Clustering describes features that are spread out over a wide area.",a:false,ex:"Spread-out features are dispersal; clustering is when they group closely together."},
+{k:"tf",q:"Scale expresses the relationship between distance on the map and distance on the ground.",a:true,ex:"For example, 1 cm on the map = 10 km in reality."},
+{k:"tf",q:"Every projection of the Earth onto a flat map introduces some kind of distortion.",a:true,ex:"A curved surface cannot be flattened without distorting shape, area, distance or direction somewhere."},
+{k:"tf",q:"\u201cLeft\u201d and \u201cright\u201d are examples of absolute direction.",a:false,ex:"They depend on where you are facing, so they are relative directions. Absolute directions are north, south, east, west."},
+{k:"tf",q:"A topographic map uses contour lines to show changes in elevation.",a:true,ex:"Contour lines are the signature feature of topographic maps."},
+{k:"tf",q:"Relative distance can be expressed in time or cost instead of physical units.",a:true,ex:"\u201cTwo hours by bus\u201d or \u201ca cheap flight away\u201d are relative distances."},
+{k:"tf",q:"On a graduated symbol map, every symbol has exactly the same size.",a:false,ex:"The symbols grow or shrink with the data value they represent."},
+{k:"tf",q:"Cartography is the science and art of mapmaking.",a:true,ex:"Straight from the definition."},
+{k:"tf",q:"A reference map concentrates on one single theme, such as income.",a:false,ex:"One single theme is the definition of a thematic map; reference maps show general information."},
+{k:"tf",q:"The Mercator projection is an example of a cylindrical projection.",a:true,ex:"It projects the globe onto a cylinder that is then unrolled."},
+{k:"tf",q:"Shape distortion means the outline of a landmass appears altered because of the projection.",a:true,ex:"The projection process bends the true shapes of coastlines and borders."},
+{k:"tf",q:"Spatial analysis is the examination of patterns and relationships across the Earth\u2019s surface.",a:true,ex:"That is the core of spatial analysis."},
+{k:"tf",q:"A physical map mainly shows human-made features like boundaries and cities.",a:false,ex:"Boundaries and cities belong to political maps; physical maps show mountains, rivers, deserts."},
+{k:"tf",q:"North, south, east and west are examples of relative direction.",a:false,ex:"Those are fixed \u2014 absolute directions."},
+{k:"tf",q:"An equal-area projection may distort shapes and distances in order to keep sizes true.",a:true,ex:"Keeping areas correct always costs something else."},
+{k:"tf",q:"The legend (map key) explains the symbols, colors and patterns used on a map.",a:true,ex:"That is exactly the legend\u2019s job."},
+/* multiple choice */
+{k:"mc",q:"Which type of map shades whole areas in proportion to a statistical value, like income per state?",o:["Dot distribution map","Choropleth map","Isoline map","Topographic map"],a:1,ex:"Choropleth maps color regions according to the value of a variable."},
+{k:"mc",q:"A map made only to show internet access rates across Africa is best described as a\u2026",o:["Reference map","Mental map","Thematic map","Political map"],a:2,ex:"It focuses on one specific subject, so it is a thematic map."},
+{k:"mc",q:"The Mercator projection is famous for preserving\u2026",o:["Direction","Area","Distance","Elevation"],a:0,ex:"It keeps compass direction true \u2014 great for navigation \u2014 at the cost of area."},
+{k:"mc",q:"\u201cThe beach is about 20 minutes from here\u201d is an example of\u2026",o:["Absolute distance","Relative distance","Distance distortion","Scale"],a:1,ex:"Distance given in time (or cost) is relative distance."},
+{k:"mc",q:"Projecting the globe onto a tube-shaped surface that is then unrolled produces a\u2026",o:["Conic projection","Cylindrical projection","Mental projection","Graduated projection"],a:1,ex:"That tube is a cylinder \u2014 the Mercator is the classic example."},
+{k:"mc",q:"Mountains, rivers and deserts are the main content of a\u2026",o:["Political map","Physical map","Cartogram","Choropleth map"],a:1,ex:"Physical maps show the natural features of the land."},
+{k:"mc",q:"On a map of Brazil, each dot stands for 10,000 people. This is a\u2026",o:["Graduated symbol map","Dot distribution map","Isoline map","Reference map"],a:1,ex:"Dots representing the frequency of a phenomenon define the dot distribution map."},
+{k:"mc",q:"Which of these is an absolute direction?",o:["Turn left after the bridge","Keep the river on your right","Head northwest for two blocks","Go straight ahead"],a:2,ex:"Northwest is fixed by the compass; the others depend on your orientation."},
+{k:"mc",q:"The contour lines of a topographic map connect points with the same\u2026",o:["Temperature","Population","Elevation","Rainfall"],a:2,ex:"Contour lines join points at the same height above sea level."},
+{k:"mc",q:"A world map where each country is resized according to its population is a\u2026",o:["Cartogram","Choropleth map","Physical map","Topographic map"],a:0,ex:"Cartograms swap real land area for a data value."},
+{k:"mc",q:"What is the job of the map legend?",o:["To show the ratio between map and ground distance","To explain the symbols, colors and patterns used","To point the map toward the north","To list the sources of the data"],a:1,ex:"The legend (map key) decodes the map\u2019s symbols for the reader."},
+{k:"mc",q:"Greenland looking almost as large as Africa on some world maps is a classic case of\u2026",o:["Shape distortion","Area distortion","Distance distortion","Relative direction"],a:1,ex:"The projection alters the true size of areas \u2014 Africa is in reality about 14 times larger."},
+{k:"mc",q:"\u201cOne centimeter on the map equals ten kilometers on the ground\u201d expresses the map\u2019s\u2026",o:["Legend","Scale","Projection","Pattern"],a:1,ex:"Scale relates map distance to real distance."},
+{k:"mc",q:"You sketch the way from home to school completely from memory. You have produced a\u2026",o:["Reference map","Topographic map","Mental map","Thematic map"],a:2,ex:"A mental map is your own internal picture of space, put on paper."},
+{k:"mc",q:"The Peters projection was promoted because it represents\u2026",o:["The true shapes of coastlines","The true areas of landmasses","The true distances between cities","The true compass directions"],a:1,ex:"Peters keeps areas accurate, which distorts shapes near the equator."},
+{k:"mc",q:"Which of these is a reference map rather than a thematic map?",o:["Choropleth map","Cartogram","Political map","Graduated symbol map"],a:2,ex:"Political maps show general features \u2014 boundaries, capitals, cities."},
+{k:"mc",q:"Circles that grow with the population of each city belong to a\u2026",o:["Graduated symbol map","Dot distribution map","Choropleth map","Isoline map"],a:0,ex:"Symbols of varying size = graduated symbol map."},
+{k:"mc",q:"A weather map with lines connecting all the places at 25 \u00b0C is an example of\u2026",o:["Choropleth map","Isoline map","Cartogram","Political map"],a:1,ex:"Lines of equal value (isotherms, in this case) make it an isoline map."},
+{k:"mc",q:"\u201cSpatial pattern\u201d refers to\u2026",o:["The arrangement of objects or phenomena in space","The ratio of map to ground distance","The height of land above sea level","The art and science of drawing maps"],a:0,ex:"It describes how things are arranged across space \u2014 clustered, dispersed, linear\u2026"},
+{k:"mc",q:"Twenty food trucks parked tightly around one stadium show which spatial pattern?",o:["Dispersal","Clustering","Distortion","Elevation"],a:1,ex:"Features grouped closely together form a cluster."},
+{k:"mc",q:"Ranches spread far apart across a huge plain show which spatial pattern?",o:["Clustering","Dispersal","Projection","Isoline"],a:1,ex:"Features spread out over a wide area show dispersal."},
+{k:"mc",q:"Why does every flat map of the Earth contain some distortion?",o:["Because cartographers are careless","Because a curved surface cannot be flattened without stretching or tearing","Because satellites take low-quality images","Because the Earth keeps changing its shape"],a:1,ex:"That is the fundamental problem every map projection tries to manage."},
+{k:"mc",q:"A projection that keeps the size of landmasses correct while bending their outlines is\u2026",o:["An equal-area projection","A Mercator projection","A reference projection","A graduated projection"],a:0,ex:"Equal-area projections preserve size at the cost of shape."},
+{k:"mc",q:"Checking whether cholera cases group around certain water pumps in a city is an example of\u2026",o:["Cartography","Spatial analysis","Elevation","Map projection"],a:1,ex:"Examining spatial patterns and relationships is spatial analysis \u2014 John Snow\u2019s famous 1854 study did exactly this."},
+{k:"mc",q:"Two cities appear much closer on a map than they really are. This is\u2026",o:["Shape distortion","Area distortion","Distance distortion","Relative direction"],a:2,ex:"The projection has altered the true distance between the two locations."},
+/* fill the blank */
+{k:"fib",q:"The science and art of mapmaking is called ___.",a:["cartography"],show:"cartography",ex:"Cartography is the science and art of mapmaking."},
+{k:"fib",q:"A ___ map uses contour lines to show changes in elevation.",a:["topographic","topographical","topographic map"],show:"topographic",ex:"Topographic maps are physical maps built around contour lines."},
+{k:"fib",q:"North, south, east and west are examples of ___ direction.",a:["absolute"],show:"absolute",ex:"Compass directions are fixed, so they are absolute."},
+{k:"fib",q:"\u201cTurn left after the bakery\u201d uses ___ direction.",a:["relative"],show:"relative",ex:"Left and right depend on your orientation \u2014 relative direction."},
+{k:"fib",q:"The ___ projection preserves direction but makes Greenland and Antarctica look huge.",a:["mercator","mercator projection"],show:"Mercator",ex:"The Mercator projection preserves direction but inflates polar areas."},
+{k:"fib",q:"The ___ projection keeps areas accurate but stretches shapes near the equator.",a:["peters","peters projection","gall peters"],show:"Peters",ex:"The Peters projection keeps areas true and stretches shapes near the equator."},
+{k:"fib",q:"The box that explains a map\u2019s symbols and colors is the ___.",a:["legend","key","map key","legend map key"],show:"legend (map key)",ex:"The legend, or map key, decodes the map\u2019s symbols."},
+{k:"fib",q:"___ distance is measured in exact units such as kilometers or miles.",a:["absolute"],show:"Absolute",ex:"Exact units \u2192 absolute distance."},
+{k:"fib",q:"___ distance describes separation in terms of time, cost or effort.",a:["relative"],show:"Relative",ex:"Time, cost or effort \u2192 relative distance."},
+{k:"fib",q:"A ___ map shows boundaries, capitals and cities.",a:["political","political map"],show:"political",ex:"Boundaries and cities are the content of political maps."},
+{k:"fib",q:"A ___ map shades whole regions according to the value of a variable.",a:["choropleth","choropleth map"],show:"choropleth",ex:"Shaded regions in proportion to a value define the choropleth map."},
+{k:"fib",q:"A map dedicated to one subject, like population density, is a ___ map.",a:["thematic"],show:"thematic",ex:"One theme, one map: the thematic map."},
+{k:"fib",q:"A map made for general orientation, showing physical or political features, is a ___ map.",a:["reference"],show:"reference",ex:"Reference maps show general information for locating features."},
+{k:"fib",q:"The height of the land above sea level is its ___.",a:["elevation","altitude"],show:"elevation",ex:"Height above sea level is elevation."},
+{k:"fib",q:"Transferring the curved Earth onto a flat sheet requires a map ___.",a:["projection","map projection"],show:"projection",ex:"That method is the map projection \u2014 and it always distorts something."},
+{k:"fib",q:"When features are grouped tightly together, the spatial pattern is called ___.",a:["clustering","cluster","clustered"],show:"clustering",ex:"Tightly grouped features form a cluster."},
+{k:"fib",q:"When features are spread out over a wide area, the pattern is called ___.",a:["dispersal","dispersion","dispersed"],show:"dispersal",ex:"Widely spread features show dispersal."},
+{k:"fib",q:"A ___ symbol map makes its symbols bigger as the data value grows.",a:["graduated"],show:"graduated",ex:"Graduated symbol maps scale their symbols with the data."},
+{k:"fib",q:"An ___ map connects points of equal value with continuous lines.",a:["isoline","isoline map"],show:"isoline",ex:"Isolines connect points of equal value."},
+{k:"fib",q:"A ___ distribution map uses many small points to show how often something occurs.",a:["dot"],show:"dot",ex:"Each dot stands for a certain quantity of the phenomenon."},
+{k:"fib",q:"The relationship between distance on the map and on the ground is the map\u2019s ___.",a:["scale"],show:"scale",ex:"Scale connects the map to real-world distance."},
+{k:"fib",q:"A ___ distorts the shape and size of places so that a data value, not land area, is represented.",a:["cartogram"],show:"cartogram",ex:"The cartogram trades true geography for the data value."},
+{k:"fib",q:"The picture of your city that exists only in your head is your ___ map.",a:["mental"],show:"mental",ex:"That personal picture is your mental map."},
+{k:"fib",q:"The general arrangement of objects or phenomena in space is called a spatial ___.",a:["pattern"],show:"pattern",ex:"How things are arranged in space is the spatial pattern."},
+{k:"fib",q:"An ___ projection keeps the true size of landmasses at the cost of their shapes.",a:["equal area","equal"],show:"equal-area",ex:"Equal-area projections keep sizes true; shapes pay the price."}
+];
+
+/* ---------------- series 2 questions: 25 true/false + 25 multiple choice + 25 fill the blank ---------------- */
+const QS2=[
+/* true / false */
+{k:"tf",q:"Remote sensing gathers information about the Earth's surface from a distance, often using satellites or aircraft.",a:true,ex:"That is the definition \u2014 no direct contact with the area being studied."},
+{k:"tf",q:"Ground truthing means collecting all geographic data exclusively from satellites.",a:false,ex:"It is the opposite: checking remote sensing data against observations made directly on the ground."},
+{k:"tf",q:"Quantitative data is numerical and can be analyzed statistically.",a:true,ex:"Numbers, counts and measurements \u2014 that is quantitative data."},
+{k:"tf",q:"Qualitative data consists mainly of numbers and measurements.",a:false,ex:"Qualitative data is non-numerical \u2014 descriptions, opinions, characteristics."},
+{k:"tf",q:"A GIS is a computer system that captures, stores, analyzes and visualizes geographic data.",a:true,ex:"The four classic verbs of a Geographic Information System."},
+{k:"tf",q:"The main purpose of GPS satellites is to photograph the Earth's surface.",a:false,ex:"GPS satellites transmit signals for geolocation and time; photographing the surface is the job of imaging satellites."},
+{k:"tf",q:"Crowdsourced data is gathered from a large group of people, often through online platforms.",a:true,ex:"Many contributors, usually online \u2014 that is crowdsourcing."},
+{k:"tf",q:"Participatory GIS (PGIS) invites community members to contribute their local knowledge to mapping projects.",a:true,ex:"The community itself becomes a source of geographic data."},
+{k:"tf",q:"Field observations are collected by analyzing aerial photographs from an office.",a:false,ex:"Field observations happen through direct observation in the environment; analyzing photos is photographic interpretation."},
+{k:"tf",q:"Data aggregation compiles and summarizes data for analysis at a larger scale.",a:true,ex:"Many small pieces of data become one combined summary."},
+{k:"tf",q:"Zoning maps show atmospheric conditions such as rainfall and temperature.",a:false,ex:"Zoning maps designate land uses; atmospheric conditions are weather data."},
+{k:"tf",q:"Time-space compression means places feel \u201ccloser\u201d because technology reduced travel and communication time.",a:true,ex:"Faster transport and instant communication shrink the effective distance between places."},
+{k:"tf",q:"Personal interviews are a qualitative method for gathering geographic information.",a:true,ex:"Asking people questions produces descriptive, qualitative data."},
+{k:"tf",q:"Media reports can never be used as a source of geographic information.",a:false,ex:"Newspapers, television and online broadcasts are a recognized source of geographic information."},
+{k:"tf",q:"Satellite imagery is used to monitor changes on the Earth's surface over time.",a:true,ex:"Comparing images of the same place across time reveals change \u2014 deforestation, urban growth, floods."},
+{k:"tf",q:"Scale of analysis refers to the ratio printed in the corner of a paper map.",a:false,ex:"The printed ratio is the map scale; scale of analysis is the level (local, regional, global) at which the data is examined."},
+{k:"tf",q:"Surveying measures distances, angles and positions on the land to create maps.",a:true,ex:"That is the surveyor's technique, tripod and all."},
+{k:"tf",q:"Urban planning uses geographic data to organize cities for efficiency, sustainability and livability.",a:true,ex:"Geographic data guides where housing, transit and services should go."},
+{k:"tf",q:"Visualization refers only to written descriptions of a place.",a:false,ex:"Visualization is graphical: maps, graphs and 3D models."},
+{k:"tf",q:"Geospatial data typically identifies locations on Earth using coordinates.",a:true,ex:"Coordinates are the usual way to pin geospatial data to the planet."},
+{k:"tf",q:"Policy documents are official papers that guide planning and decision-making.",a:true,ex:"Governments and organizations publish them to communicate data and direct decisions."},
+{k:"tf",q:"Online mapping requires printed atlases and cannot be shared through the internet.",a:false,ex:"Online mapping is exactly the opposite \u2014 internet-based tools for creating and sharing maps."},
+{k:"tf",q:"Photographic interpretation analyzes aerial or satellite photos to gather data about a region.",a:true,ex:"Reading photos for geographic information is photographic interpretation."},
+{k:"tf",q:"Weather data is only useful for meteorologists, never for geographers.",a:false,ex:"Geographers use weather data for environmental analysis and decision-making all the time."},
+{k:"tf",q:"Spatial information describes the location, shape and relationships of features on the Earth's surface.",a:true,ex:"Where things are, what form they have, and how they relate \u2014 spatial information."},
+/* multiple choice */
+{k:"mc",q:"Which system captures, stores, analyzes and visualizes geographic data?",o:["GPS","GIS","PGIS","Remote sensing"],a:1,ex:"That four-part definition belongs to the Geographic Information System (GIS)."},
+{k:"mc",q:"A researcher visits the actual location to check whether the satellite classification was correct. This is\u2026",o:["Ground truthing","Data aggregation","Zoning","Online mapping"],a:0,ex:"Validating remote sensing data with on-the-ground observations is ground truthing."},
+{k:"mc",q:"\u201c78% of households\u201d, \u201c12 km\u201d and \u201c3.4 million people\u201d are examples of\u2026",o:["Qualitative data","Quantitative data","Policy documents","Media reports"],a:1,ex:"Numbers that can be measured and analyzed statistically are quantitative data."},
+{k:"mc",q:"Interview transcripts describing how residents feel about their neighborhood are\u2026",o:["Quantitative data","Geospatial data","Qualitative data","Weather data"],a:2,ex:"Non-numerical descriptions of qualities and perceptions are qualitative data."},
+{k:"mc",q:"A world map built by thousands of volunteers adding edits through an online platform relies on\u2026",o:["Crowdsourced data","Ground truthing","Photographic interpretation","Policy documents"],a:0,ex:"Data contributed by a large group of people online is crowdsourced data."},
+{k:"mc",q:"Villagers draw their water sources and paths onto a shared digital map for a community project. This is\u2026",o:["Participatory GIS (PGIS)","Remote sensing","Urban planning","Time-space compression"],a:0,ex:"Community members contributing local knowledge to a GIS project \u2014 PGIS."},
+{k:"mc",q:"Gathering information about the Earth from satellites or aircraft, without touching the ground, is\u2026",o:["Field observation","Remote sensing","Surveying","Visualization"],a:1,ex:"Sensing from a distance \u2014 remote sensing."},
+{k:"mc",q:"A geographer stands on a street corner counting pedestrians and noting the types of shops. This is\u2026",o:["Field observations","Photographic interpretation","Media reports","Data aggregation"],a:0,ex:"Direct observation in the environment is a field observation."},
+{k:"mc",q:"Studying an aerial photo to map which areas were flooded is\u2026",o:["Photographic interpretation","Ground truthing","Zoning","Personal interviews"],a:0,ex:"Extracting geographic data from photos is photographic interpretation."},
+{k:"mc",q:"Combining neighborhood-level results into one citywide total is\u2026",o:["Data aggregation","Crowdsourcing","Scale of analysis","Spatial information"],a:0,ex:"Compiling and summarizing data at a larger scale is data aggregation."},
+{k:"mc",q:"Which source provides geographic information through newspapers, television or online broadcasts?",o:["Policy documents","Media reports","Satellite imagery","Weather data"],a:1,ex:"News outlets are the media reports source."},
+{k:"mc",q:"The satellites that tell your phone exactly where you are belong to\u2026",o:["A satellite navigation system (GPS)","A geographic information system (GIS)","Participatory GIS","Photographic interpretation"],a:0,ex:"GPS satellites provide geolocation and time information to receivers on Earth."},
+{k:"mc",q:"Pictures of the Earth's surface taken from orbit are called\u2026",o:["Satellite imagery","Visualization","Zoning maps","Policy documents"],a:0,ex:"Images collected by satellites are satellite imagery."},
+{k:"mc",q:"Examining the same phenomenon at the local, regional and then global level means changing the\u2026",o:["Scale of analysis","Data aggregation","Spatial information","Ground truthing"],a:0,ex:"The level of detail or scope of the examination is the scale of analysis."},
+{k:"mc",q:"Coordinates marking the boundaries of a national park are an example of\u2026",o:["Geospatial data","Qualitative data","Media reports","Weather data"],a:0,ex:"Location on Earth represented by coordinates \u2014 geospatial data."},
+{k:"mc",q:"Which technique uses instruments to measure distances, angles and positions on the land?",o:["Surveying","Remote sensing","Crowdsourcing","Visualization"],a:0,ex:"That is surveying, the base of precise mapmaking."},
+{k:"mc",q:"Video calls and cheap flights making the world feel \u201csmaller\u201d illustrate\u2026",o:["Time-space compression","Data aggregation","Urban planning","Scale of analysis"],a:0,ex:"Technology reducing the time and cost of covering distance is time-space compression."},
+{k:"mc",q:"Deciding where new housing, parks and transit lines should go is the job of\u2026",o:["Urban planning","Photographic interpretation","Ground truthing","Media reports"],a:0,ex:"Urban planning organizes city space using geographic data."},
+{k:"mc",q:"Turning a spreadsheet of census numbers into an interactive 3D map is\u2026",o:["Visualization","Data aggregation","Surveying","Crowdsourcing"],a:0,ex:"Representing data graphically \u2014 maps, graphs, 3D models \u2014 is visualization."},
+{k:"mc",q:"A map that separates a city into residential, commercial and industrial areas is a\u2026",o:["Zoning map","Satellite image","Policy document","Crowdsourced map"],a:0,ex:"Maps that designate land for specific uses are zoning maps."},
+{k:"mc",q:"Rainfall totals and temperature records used in an environmental study are\u2026",o:["Weather data","Qualitative data","Media reports","Policy documents"],a:0,ex:"Information about atmospheric conditions is weather data."},
+{k:"mc",q:"An official city document that sets the rules for future land development is a\u2026",o:["Policy document","Personal interview","Field observation","Online map"],a:0,ex:"Official papers guiding planning and decisions are policy documents."},
+{k:"mc",q:"Maps you can pan, zoom and share directly in a web browser are examples of\u2026",o:["Online mapping","Photographic interpretation","Ground truthing","Surveying"],a:0,ex:"Internet-based tools for creating and interacting with maps \u2014 online mapping."},
+{k:"mc",q:"Asking farmers one by one about their irrigation choices is collecting data through\u2026",o:["Personal interviews","Remote sensing","Data aggregation","Satellite imagery"],a:0,ex:"Question-and-answer with individuals is the personal interview method."},
+{k:"mc",q:"\u201cThe location, shape and relationships of features on the Earth's surface\u201d describes\u2026",o:["Spatial information","Time-space compression","Quantitative data","Urban planning"],a:0,ex:"That is the definition of spatial information."},
+/* fill the blank */
+{k:"fib",q:"A ___ is a computer system that captures, stores, analyzes and visualizes geographic data.",a:["gis","geographic information system"],show:"GIS",ex:"GIS \u2014 Geographic Information System."},
+{k:"fib",q:"___ sensing gathers information about the Earth from satellites or aircraft.",a:["remote"],show:"remote",ex:"Remote sensing \u2014 sensing from a distance."},
+{k:"fib",q:"___ truthing validates remote sensing data with observations made on the ground.",a:["ground"],show:"ground",ex:"Ground truthing checks the view from above against the reality below."},
+{k:"fib",q:"Numerical information that can be measured and analyzed statistically is ___ data.",a:["quantitative"],show:"quantitative",ex:"Quantities \u2192 quantitative data."},
+{k:"fib",q:"Non-numerical information describing qualities or characteristics is ___ data.",a:["qualitative"],show:"qualitative",ex:"Qualities \u2192 qualitative data."},
+{k:"fib",q:"Information gathered from a large group of people through online platforms is ___ data.",a:["crowdsourced","crowd sourced","crowdsource"],show:"crowdsourced",ex:"The crowd is the source \u2014 crowdsourced data."},
+{k:"fib",q:"___ GIS invites community members to contribute local knowledge to mapping projects.",a:["participatory"],show:"participatory",ex:"Participatory GIS (PGIS) puts the community inside the mapping process."},
+{k:"fib",q:"GPS is a satellite ___ system that provides geolocation and time information.",a:["navigation"],show:"navigation",ex:"GPS \u2014 a satellite navigation system."},
+{k:"fib",q:"___ observations collect data directly in the natural environment.",a:["field"],show:"field",ex:"Out in the field, observing directly."},
+{k:"fib",q:"The analysis of aerial or satellite photos is called photographic ___.",a:["interpretation"],show:"interpretation",ex:"Photographic interpretation reads geographic data out of images."},
+{k:"fib",q:"Compiling and summarizing data at a larger scale is data ___.",a:["aggregation","agregation"],show:"aggregation",ex:"Data aggregation merges many pieces into one summary."},
+{k:"fib",q:"Newspapers, television and online broadcasts provide geographic information through media ___.",a:["reports","report"],show:"reports",ex:"Media reports are a recognized data source."},
+{k:"fib",q:"Images of the Earth's surface collected from orbit are satellite ___.",a:["imagery","images"],show:"imagery",ex:"Satellite imagery."},
+{k:"fib",q:"Examining data at the local, regional or global level is choosing the ___ of analysis.",a:["scale"],show:"scale",ex:"The scale of analysis sets the level of detail."},
+{k:"fib",q:"Information that locates features on Earth using coordinates is ___ data.",a:["geospatial","geo spatial"],show:"geospatial",ex:"Geospatial data ties information to coordinates."},
+{k:"fib",q:"Data describing the location, shape and relationships of features is ___ information.",a:["spatial"],show:"spatial",ex:"Spatial information."},
+{k:"fib",q:"Measuring distances, angles and positions on the land to make maps is called ___.",a:["surveying"],show:"surveying",ex:"Surveying \u2014 tripod, instruments and precision."},
+{k:"fib",q:"The feeling that the world \u201cshrank\u201d thanks to faster transport and communication is time-space ___.",a:["compression"],show:"compression",ex:"Time-space compression."},
+{k:"fib",q:"Designing and organizing cities for efficiency, sustainability and livability is urban ___.",a:["planning"],show:"planning",ex:"Urban planning."},
+{k:"fib",q:"Representing geographic data with maps, graphs or 3D models is ___.",a:["visualization","visualisation"],show:"visualization",ex:"Visualization turns data into something you can see."},
+{k:"fib",q:"Information about atmospheric conditions used in geographic analysis is ___ data.",a:["weather"],show:"weather",ex:"Weather data."},
+{k:"fib",q:"Maps that assign land to residential, commercial or industrial use are ___ maps.",a:["zoning"],show:"zoning",ex:"Zoning maps organize what each piece of land is for."},
+{k:"fib",q:"Official papers that communicate data and guide planning decisions are ___ documents.",a:["policy"],show:"policy",ex:"Policy documents."},
+{k:"fib",q:"Creating and sharing interactive maps through internet platforms is ___ mapping.",a:["online"],show:"online",ex:"Online mapping."},
+{k:"fib",q:"Asking individuals questions face to face to gather geographic information is a personal ___.",a:["interview","interviews"],show:"interview",ex:"The personal interview, a classic qualitative method."}
+];
+
+
+/* ---------------- helpers ---------------- */
+const $=s=>document.querySelector(s);
+function shuf(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const norm=s=>s.toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+
+const SERIES={
+  s1:{label:"Series 1",terms:TERMS,qs:QS},
+  s2:{label:"Series 2",terms:TERMS2,qs:QS2}
+};
+
+/* ---------------- tabs ---------------- */
+let quizStarted=false;
+document.querySelectorAll(".tabbtn").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll(".tabbtn").forEach(x=>x.classList.toggle("active",x===b));
+  const tab=b.dataset.tab;
+  $("#view-s1").hidden=(tab!=="s1");
+  $("#view-s2").hidden=(tab!=="s2");
+  $("#view-quiz").hidden=(tab!=="quiz");
+  if(tab==="quiz"&&!quizStarted){quizStarted=true;startQuiz();}
+}));
+
+/* ---------------- flashcards ---------------- */
+const decks={s1:{order:[...TERMS]},s2:{order:[...TERMS2]}};
+function drawCards(k){
+  $("#grid-"+k).innerHTML=decks[k].order.map(c=>{
+    const p=PAL[(c.n-1)%PAL.length];
+    return `<div class="fc" role="button" tabindex="0" aria-label="Flashcard: ${c.t}">
+      <div class="fc-in">
+        <div class="face front" style="--acc:${p[0]}">
+          <span class="num">#${c.n}</span>
+          <div class="ic">${ICONS[c.ic]}</div>
+          <div class="term">${c.t}</div>
+          <div class="hint">Click to flip</div>
+        </div>
+        <div class="face back" style="--acc:${p[0]};--tint:${p[1]}">
+          <span class="num">#${c.n}</span>
+          <div class="bt">${c.t}</div>
+          <p>${c.d}</p>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+  document.querySelector(`[data-act="flipall"][data-deck="${k}"]`).textContent="Flip all";
+}
+["s1","s2"].forEach(k=>{
+  const g=$("#grid-"+k);
+  g.addEventListener("click",e=>{const f=e.target.closest(".fc");if(f)f.classList.toggle("flipped");});
+  g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){const f=e.target.closest(".fc");if(f){e.preventDefault();f.classList.toggle("flipped");}}});
+});
+document.querySelectorAll("[data-act]").forEach(b=>b.addEventListener("click",()=>{
+  const k=b.dataset.deck,act=b.dataset.act;
+  if(act==="shuffle"){decks[k].order=shuf([...decks[k].order]);drawCards(k);}
+  else if(act==="sort"){decks[k].order=[...SERIES[k].terms];drawCards(k);}
+  else{
+    const cs=[...document.querySelectorAll("#grid-"+k+" .fc")];
+    const anyUn=cs.some(c=>!c.classList.contains("flipped"));
+    cs.forEach(c=>c.classList.toggle("flipped",anyUn));
+    b.textContent=anyUn?"Unflip all":"Flip all";
+  }
+}));
+
+/* ---------------- quiz engine ---------------- */
+let ser="s1",mode="all",pool=[],qi=0,score=0,log=[],answered=false;
+
+function srcQs(){
+  return ser==="both"
+    ? QS.map(x=>({...x,ser:"s1"})).concat(QS2.map(x=>({...x,ser:"s2"})))
+    : SERIES[ser].qs.map(x=>({...x,ser}));
+}
+function refreshCounts(){
+  const src=srcQs();
+  const names={all:"All",tf:"True / False",mc:"Multiple choice",fib:"Fill the blank"};
+  document.querySelectorAll(".fchip[data-mode]").forEach(b=>{
+    const m=b.dataset.mode;
+    const n=(m==="all")?src.length:src.filter(x=>x.k===m).length;
+    b.textContent=names[m]+" \u00b7 "+n;
+  });
+}
+function startQuiz(){
+  pool=srcQs().filter(x=>mode==="all"||x.k===mode);
+  if($("#shufq").checked)pool=shuf(pool);
+  qi=0;score=0;log=[];renderQ();
+}
+function badge(k){
+  if(k==="tf")return '<span class="badge tf">True / False</span>';
+  if(k==="mc")return '<span class="badge mc">Multiple choice</span>';
+  return '<span class="badge fib">Fill the blank</span>';
+}
+function serTag(q){return ser==="both"?`<span class="badge sertag">${SERIES[q.ser].label}</span>`:"";}
+function renderQ(){
+  const sh=$("#qshell");
+  if(qi>=pool.length){renderEnd();return;}
+  const q=pool[qi];answered=false;
+  const pct=Math.round(qi/pool.length*100);
+  let body="";
+  if(q.k==="tf"){
+    body='<div class="opts tf"><button class="opt" data-v="t">True</button><button class="opt" data-v="f">False</button></div>';
+  }else if(q.k==="mc"){
+    const opts=shuf(q.o.map((t,i)=>({t,i})));
+    body='<div class="opts">'+opts.map(o=>`<button class="opt" data-i="${o.i}">${o.t}</button>`).join("")+"</div>";
+  }else{
+    body='<div class="fibrow"><input id="fibin" type="text" autocomplete="off" spellcheck="false" placeholder="Type the missing word\u2026"><button class="btn blue" id="fibgo">Check</button></div>';
+  }
+  const qtext=(q.k==="fib")?q.q.replace("___",'<span class="blank" id="blank"></span>'):q.q;
+  sh.innerHTML=`
+    <div class="pwrap"><div class="pbar"><div class="pfill" style="width:${pct}%"></div></div><span class="scorepill">Score: ${score}</span></div>
+    <div class="qcard">
+      <div class="qtop"><span class="qn">Question ${qi+1} of ${pool.length}</span>${badge(q.k)}${serTag(q)}</div>
+      <div class="qtext">${qtext}</div>
+      ${body}
+      <div class="fb" id="fb"></div>
+      <div class="qnav"><button class="btn" id="nextq" style="display:none">${qi===pool.length-1?"See results":"Next question"}</button></div>
+    </div>`;
+  if(q.k==="tf"){
+    sh.querySelectorAll(".opt").forEach(b=>b.addEventListener("click",()=>{
+      if(answered)return;
+      const v=(b.dataset.v==="t");const ok=(v===q.a);
+      sh.querySelectorAll(".opt").forEach(x=>{
+        const xv=(x.dataset.v==="t");
+        if(xv===q.a)x.classList.add("good");
+        else if(x===b)x.classList.add("bad");
+        else x.classList.add("dim");
+        x.disabled=true;
+      });
+      finish(q,ok,q.a?"True":"False");
+    }));
+  }else if(q.k==="mc"){
+    sh.querySelectorAll(".opt").forEach(b=>b.addEventListener("click",()=>{
+      if(answered)return;
+      const i=+b.dataset.i;const ok=(i===q.a);
+      sh.querySelectorAll(".opt").forEach(x=>{
+        const xi=+x.dataset.i;
+        if(xi===q.a)x.classList.add("good");
+        else if(x===b)x.classList.add("bad");
+        else x.classList.add("dim");
+        x.disabled=true;
+      });
+      finish(q,ok,q.o[q.a]);
+    }));
+  }else{
+    const inp=$("#fibin");
+    const go=()=>{
+      if(answered)return;
+      const val=norm(inp.value);
+      if(!val){inp.focus();return;}
+      const ok=q.a.some(x=>norm(x)===val);
+      inp.classList.add(ok?"ok":"no");inp.disabled=true;
+      const bl=$("#blank");bl.textContent=q.show;bl.style.color="var(--green)";
+      finish(q,ok,q.show);
+    };
+    $("#fibgo").addEventListener("click",go);
+    inp.addEventListener("keydown",e=>{if(e.key==="Enter")go();});
+    inp.focus();
+  }
+}
+function finish(q,ok,correctText){
+  answered=true;if(ok)score++;
+  log.push({k:q.k,ser:q.ser,ok,q:(q.k==="fib")?q.q.replace("___","______"):q.q,ans:correctText});
+  const fb=$("#fb");
+  fb.classList.add("on",ok?"ok":"no");
+  fb.innerHTML=ok?("<b>Correct.</b> "+q.ex):("<b>Not quite.</b> The right answer is <b>"+correctText+"</b>. "+q.ex);
+  $(".scorepill").textContent="Score: "+score;
+  const nb=$("#nextq");nb.style.display="inline-block";
+  nb.addEventListener("click",()=>{qi++;renderQ();});
+  nb.focus();
+}
+function renderEnd(){
+  const sh=$("#qshell");
+  const total=pool.length;const pct=total?Math.round(score/total*100):0;
+  let msg;
+  if(pct>=90)msg="Excellent \u2014 you clearly know this material.";
+  else if(pct>=75)msg="Solid result. A quick pass on the missed cards and you are there.";
+  else if(pct>=50)msg="Good base. Flip through the flashcards again and retry.";
+  else msg="Keep going \u2014 the flashcard tabs are your friends.";
+  const types=[["tf","True / False"],["mc","Multiple choice"],["fib","Fill the blank"]].filter(t=>log.some(l=>l.k===t[0]));
+  let rows=types.map(t=>{
+    const sub=log.filter(l=>l.k===t[0]);const c=sub.filter(l=>l.ok).length;
+    return `<span class="tb">${t[1]}: ${c}/${sub.length}</span>`;
+  }).join("");
+  if(ser==="both"){
+    rows+=[["s1","Series 1"],["s2","Series 2"]].map(t=>{
+      const sub=log.filter(l=>l.ser===t[0]);const c=sub.filter(l=>l.ok).length;
+      return `<span class="tb">${t[1]}: ${c}/${sub.length}</span>`;
+    }).join("");
+  }
+  const missed=log.filter(l=>!l.ok);
+  const missedHtml=missed.length
+    ?`<details class="missed"><summary>Review the ${missed.length} you missed</summary><ol>${missed.map(m=>`<li>${m.q}<br>\u2192 <b>${m.ans}</b></li>`).join("")}</ol></details>`
+    :'<p style="font-weight:700;margin-bottom:18px">Nothing missed \u2014 a perfect run.</p>';
+  sh.innerHTML=`
+    <div class="pwrap"><div class="pbar"><div class="pfill" style="width:100%"></div></div><span class="scorepill">Done</span></div>
+    <div class="done">
+      <div class="bigscore">${score} / ${total}</div>
+      <div class="donemsg">${pct}% \u2014 ${msg}</div>
+      <div class="tbreak">${rows}</div>
+      ${missedHtml}
+      <div class="endbtns">
+        <button class="btn blue" id="again">Try again</button>
+        <button class="btn plain" id="tocards">Back to flashcards</button>
+      </div>
+    </div>`;
+  $("#again").addEventListener("click",startQuiz);
+  $("#tocards").addEventListener("click",()=>{document.querySelector('[data-tab="'+(ser==="both"?"s1":ser)+'"]').click();});
+}
+
+/* filters */
+document.querySelectorAll(".fchip[data-ser]").forEach(b=>b.addEventListener("click",()=>{
+  ser=b.dataset.ser;
+  document.querySelectorAll(".fchip[data-ser]").forEach(x=>x.classList.toggle("active",x===b));
+  refreshCounts();startQuiz();
+}));
+document.querySelectorAll(".fchip[data-mode]").forEach(b=>b.addEventListener("click",()=>{
+  mode=b.dataset.mode;
+  document.querySelectorAll(".fchip[data-mode]").forEach(x=>x.classList.toggle("active",x===b));
+  startQuiz();
+}));
+$("#shufq").addEventListener("change",startQuiz);
+
+/* init */
+drawCards("s1");drawCards("s2");refreshCounts();
+</script>
+</body>
+</html>
